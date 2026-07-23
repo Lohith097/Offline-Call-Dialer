@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Alumni Call Assistant</title>
+  <style>
+    :root { 
+      --primary: #2563eb; 
+      --whatsapp: #25D366; 
+      --email: #ea4335; 
+      --sms: #8b5cf6; 
+      --bg: #f8fafc; 
+      --card-bg: #ffffff; 
+      --text: #0f172a; 
+      --text-muted: #64748b; 
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 30px; }
+
+    header { background: var(--primary); color: white; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .nav-tabs { display: flex; background: white; border-bottom: 1px solid #e2e8f0; overflow-x: auto; white-space: nowrap; }
+    .tab-btn { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; border: none; background: none; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    textarea.import-box { width: 100%; height: 120px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; margin-bottom: 12px; resize: vertical; }
+    .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .input-row input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; text-decoration: none; color: white; }
+    .btn-primary { background: var(--primary); }
+    .btn-call { background: var(--primary); }
+    .btn-wa { background: var(--whatsapp); color: #000; }
+    .btn-email { background: var(--email); }
+    .btn-sms { background: var(--sms); }
+    .btn-secondary { background: #64748b; }
+    .btn-success { background: #16a34a; }
+
+    .card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
+    .card-main { border: 2px solid var(--primary); box-shadow: 0 8px 16px rgba(37,99,235,0.12); }
+    
+    .contact-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .contact-name { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+    
+    .gender-badge { display: inline-block; width: 24px; height: 24px; border-radius: 50%; text-align: center; line-height: 24px; color: white; font-weight: bold; font-size: 0.8rem; }
+    .gender-m { background-color: #3b82f6; } 
+    .gender-f { background-color: #ec4899; } 
+    .gender-hidden { display: none; }
+
+    .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .wa-selector { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px; background: #e2e8f0; font-weight: bold;}
+    
+    .typable-input, .notes-box, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; margin-bottom: 10px; }
+    .notes-box { min-height: 60px; }
+    
+    .progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; font-size: 0.85rem; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+  <header><h1>📞 Offline Call Assistant</h1></header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('import')">📥 New Batch</button>
+    <button class="tab-btn" onclick="switchTab('focused')">🎯 Dialer</button>
+    <button class="tab-btn" onclick="switchTab('list')">📋 DB</button>
+  </div>
+
+  <div class="container">
+
+    <!-- TAB 1: PASTE BATCH -->
+    <div id="view-import" class="view active">
+      <h3>Load Fresh Calling Data</h3>
+      <div class="input-row">
+        <input type="text" id="batch-name" placeholder="Batch Name (e.g. Batch 2014)">
+      </div>
+      <textarea id="paste-input" class="import-box" placeholder="Paste Data (Name, Gender, Phone, Email)..."></textarea>
+      <button class="btn btn-primary" onclick="parseBatch()" style="padding: 12px; width: 100%;">🚀 Start Dialing Batch</button>
+      <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">All data is saved offline to this browser automatically. You can add as many batches as you want without losing old data.</p>
+    </div>
+
+    <!-- TAB 2: FOCUSED DIALER -->
+    <div id="view-focused" class="view">
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+      <div style="text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+        <span id="batch-label" style="font-weight:bold; color:var(--primary);"></span> | Contact <span id="current-idx-display">0</span> of <span id="total-count">0</span>
+      </div>
+
+      <div class="card card-main">
+        <div class="contact-header">
+          <div id="curr-name" class="contact-name">Select batch to start</div>
+          <div id="curr-gender" class="gender-badge gender-hidden"></div>
+        </div>
+        
+        <div id="curr-phone" style="color: var(--text-muted); margin-bottom: 4px;"></div>
+        <div id="curr-email" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;"></div>
+
+        <!-- Buttons Grid -->
+        <div class="action-group">
+          <a id="btn-call-link" href="#" class="btn btn-call">📞 Call</a>
+          <a id="btn-wa-link" href="#" target="_blank" class="btn btn-wa">💬 WA</a>
+          <a id="btn-sms-link" href="#" class="btn btn-sms">📱 SMS</a>
+          <a id="btn-email-link" href="#" target="_blank" class="btn btn-email">✉️ Email</a>
+        </div>
+        
+        <!-- Template Selector -->
+        <select id="wa-template" class="wa-selector" onchange="updateLinks()">
+          <option value="1">Template 1: Interested Invite</option>
+          <option value="2">Template 2: RNR / No Response</option>
+        </select>
+
+        <!-- Status & Notes -->
+        <input type="text" id="curr-status" class="typable-input" list="status-options" placeholder="Call Status (e.g. RNR)" onchange="saveCurrent()">
+        <datalist id="status-options">
+          <option value="Registered"><option value="Interested"><option value="Not Interested"><option value="RNR"><option value="Invalid Number"><option value="Not Sure"><option value="Resend Email"><option value="No Number">
+        </datalist>
+        <textarea id="curr-notes" class="notes-box" placeholder="Remarks..." onchange="saveCurrent()"></textarea>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="btn btn-outline" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: transparent; cursor: pointer;" onclick="navigate(-1)">Prev</button>
+          <button class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="navigate(1)">Next ➡️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DATABASE / EXPORT -->
+    <div id="view-list" class="view">
+      <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+        <button class="btn btn-success" style="flex: 2; padding: 12px;" onclick="exportCSV()">📥 Export DB to Excel</button>
+        <button class="btn btn-secondary" style="flex: 1; padding: 12px; background: #ef4444;" onclick="clearData()">Clear All</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="contacts-table">
+          <thead><tr><th>Name / Details</th><th>Status</th></tr></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let contacts = JSON.parse(localStorage.getItem('alumni_contacts') || '[]');
+    let currentIndex = 0;
+
+    const templates = {
+      "1": "Dear [NAME],\n\nThank you for your time. We're delighted that you're interested in joining us for the Alliance Alumni Annual Meet August 29th 2026 as we celebrate 30 Years of Academic Excellence.\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nWe'll keep you updated with the event details. We look forward to celebrating this special milestone with you!",
+      "2": "Dear [NAME],\n\nGreetings from Alliance Alumni Association!\n\nWe tried reaching you regarding the Alliance Alumni Annual Meet August 29th 2026, celebrating 30 Years of Academic Excellence. Kindly let us know a convenient time to connect, or feel free to reply to this message.\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nWe look forward to hearing from you."
+    };
+
+    const emailSubject = "Alliance Annual Alumni Meet August 29th 2026";
+
+    window.onload = () => { if(contacts.length > 0) renderFocused(); renderDB(); };
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('view-' + tab).classList.add('active');
+      if(tab === 'focused') renderFocused();
+      if(tab === 'list') renderDB();
+    }
+
+    function parseTextToContacts(rawText, batchName) {
+      let lines = rawText.split('\n');
+      let arr = [];
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        let parts = line.split('\t').map(p => p.trim());
+        
+        let phoneMatch = line.match(/[6-9]\d{9}/);
+        let phone = phoneMatch ? phoneMatch[0] : '';
+        
+        let emailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        let email = emailMatch ? emailMatch[0] : '';
+        
+        let name = parts[0];
+        let gender = '';
+        let status = 'Pending';
+        
+        if(parts.length > 1) {
+          let gPart = parts.find(p => p.match(/^(MALE|FEMALE|M|F)$/i));
+          if(gPart) {
+             gender = gPart.toUpperCase().startsWith('M') ? 'M' : 'F';
+          }
+          let possibleNames = parts.filter(p => 
+             p !== phone && 
+             p !== email && 
+             !p.match(/^(MALE|FEMALE|M|F)$/i) &&
+             !p.match(/^(Interested|Not Interested|RNR|Invalid Number|Not Sure|No Number|Registered)$/i)
+          );
+          if (possibleNames.length > 0) name = possibleNames[0];
+          
+          status = parts.find(p => p.match(/^(Interested|Not Interested|RNR|Invalid Number|Not Sure|No Number|Registered)$/i)) || 'Pending';
+        } else {
+          if (line.match(/\b(MALE|FEMALE)\b/i)) {
+             gender = line.match(/\b(MALE)\b/i) ? 'M' : 'F';
+          }
+          name = line.replace(/[6-9]\d{9}/, '').replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, '').replace(/MALE|FEMALE/ig, '').replace(/Not Interested|Interested|RNR|Invalid Number|Not Sure|No Number|Registered/ig, '').trim();
+        }
+
+        arr.push({ name: name || 'Unknown', gender: gender, phone: phone, email: email, status: status, notes: '', batch: batchName });
+      });
+      return arr;
+    }
+
+    function parseBatch() {
+      let rawText = document.getElementById('paste-input').value.trim();
+      let bName = document.getElementById('batch-name').value.trim() || 'Unnamed Batch';
+      if (!rawText) return alert("Paste data first!");
+      
+      let newContacts = parseTextToContacts(rawText, bName);
+      let startIndex = contacts.length;
+      
+      contacts = contacts.concat(newContacts); 
+      currentIndex = startIndex;
+      
+      localStorage.setItem('alumni_contacts', JSON.stringify(contacts));
+      
+      alert(`Added ${newContacts.length} contacts! Total DB is now ${contacts.length}.`);
+      document.getElementById('paste-input').value = '';
+      switchTab('focused');
+    }
+
+    function renderFocused() {
+      if (contacts.length === 0) return;
+      let c = contacts[currentIndex];
+      
+      document.getElementById('batch-label').innerText = c.batch || 'Unnamed Batch';
+      document.getElementById('total-count').innerText = contacts.length;
+      document.getElementById('current-idx-display').innerText = currentIndex + 1;
+      document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / contacts.length) * 100}%`;
+
+      document.getElementById('curr-name').innerText = c.name;
+      
+      let genderBadge = document.getElementById('curr-gender');
+      if (c.gender === 'M') {
+        genderBadge.innerText = 'M';
+        genderBadge.className = 'gender-badge gender-m';
+      } else if (c.gender === 'F') {
+        genderBadge.innerText = 'F';
+        genderBadge.className = 'gender-badge gender-f';
+      } else {
+        genderBadge.className = 'gender-badge gender-hidden';
+      }
+      
+      document.getElementById('curr-phone').innerText = c.phone ? `📱 ${c.phone}` : 'No Phone Provided';
+      document.getElementById('curr-email').innerText = c.email ? `✉️ ${c.email}` : '';
+      
+      document.getElementById('curr-status').value = c.status === 'Pending' ? '' : c.status;
+      document.getElementById('curr-notes').value = c.notes;
+
+      updateLinks();
+    }
+
+    function updateLinks() {
+      if (contacts.length === 0) return;
+      let c = contacts[currentIndex];
+      let tplId = document.getElementById('wa-template').value;
+      let msg = templates[tplId].replace(/\[NAME\]|\[Alumni Name\]/g, c.name);
+
+      let callBtn = document.getElementById('btn-call-link');
+      let waBtn = document.getElementById('btn-wa-link');
+      let smsBtn = document.getElementById('btn-sms-link');
+      let emailBtn = document.getElementById('btn-email-link');
+
+      if (c.phone) {
+        callBtn.href = `tel:${c.phone}`;
+        waBtn.href = `https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`;
+        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        let smsSeparator = isIOS ? '&' : '?';
+        smsBtn.href = `sms:${c.phone}${smsSeparator}body=${encodeURIComponent(msg)}`;
+        
+        [callBtn, waBtn, smsBtn].forEach(b => { b.style.opacity = '1'; b.style.pointerEvents = 'auto'; });
+      } else {
+        [callBtn, waBtn, smsBtn].forEach(b => { 
+          b.removeAttribute('href'); 
+          b.style.opacity = '0.5'; 
+          b.style.pointerEvents = 'none'; 
+        });
+      }
+
+      if (c.email) {
+        emailBtn.href = `mailto:${c.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(msg)}`;
+        emailBtn.style.opacity = '1'; emailBtn.style.pointerEvents = 'auto';
+      } else {
+        emailBtn.removeAttribute('href');
+        emailBtn.style.opacity = '0.5'; emailBtn.style.pointerEvents = 'none';
+      }
+    }
+
+    function saveCurrent() {
+      if (contacts.length === 0) return;
+      let c = contacts[currentIndex];
+      c.status = document.getElementById('curr-status').value;
+      c.notes = document.getElementById('curr-notes').value;
+      localStorage.setItem('alumni_contacts', JSON.stringify(contacts));
+    }
+
+    function navigate(dir) {
+      saveCurrent();
+      if (currentIndex + dir >= 0 && currentIndex + dir < contacts.length) {
+        currentIndex += dir;
+        renderFocused();
+      }
+    }
+
+    function renderDB() {
+      let html = "";
+      contacts.forEach(c => {
+        let details = [c.batch, c.phone, c.email].filter(Boolean).join(' | ');
+        let genderMark = c.gender ? ` (${c.gender})` : '';
+        html += `<tr><td><strong>${c.name}${genderMark}</strong><br><small>${details}</small></td><td>${c.status}</td></tr>`;
+      });
+      document.getElementById('table-body').innerHTML = html || "<tr><td colspan='2'>No data.</td></tr>";
+    }
+
+    function exportCSV() {
+      if (contacts.length === 0) return;
+      let csv = "Batch,Name,Gender,Phone,Email,Status,Remarks\n";
+      contacts.forEach(c => csv += `"${c.batch || ''}","${c.name}","${c.gender}","${c.phone}","${c.email}","${c.status}","${(c.notes||'').replace(/"/g, '""')}"\n`);
+      const link = document.createElement("a");
+      link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+      link.download = `Alumni_Master_Database.csv`;
+      link.click();
+    }
+
+    function clearData() {
+      if(confirm("Clear local DB entirely? Make sure you exported to Excel first!")) {
+        contacts = []; localStorage.clear();
+        renderDB(); switchTab('import');
+      }
+    }
+  </script>
+</body>
+</html>
