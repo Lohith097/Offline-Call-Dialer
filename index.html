@@ -56,12 +56,16 @@
     .contact-name-input { font-size: 1.3rem; font-weight: 700; color: var(--text); border: 1px solid transparent; width: 100%; padding: 4px; border-radius: 6px; }
     .contact-name-input:focus { border-color: var(--primary); background: #f8fafc; }
     
-    .gender-selector { min-width: 90px; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; font-size: 0.85rem; background: #f1f5f9; }
+    .gender-badge { display: inline-block; width: 26px; height: 26px; border-radius: 50%; text-align: center; line-height: 26px; color: white; font-weight: bold; font-size: 0.9rem; flex-shrink: 0; }
+    .gender-m { background-color: #3b82f6; } 
+    .gender-f { background-color: #ec4899; } 
+    .gender-hidden { display: none; }
 
-    .field-input { width: 100%; padding: 8px; border: 1px solid transparent; border-radius: 6px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; }
+    .input-with-icon { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .field-input { width: 100%; padding: 8px; border: 1px solid transparent; border-radius: 6px; font-size: 0.95rem; color: var(--text-muted); }
     .field-input:focus { border-color: var(--primary); background: #f8fafc; color: var(--text); }
 
-    .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; margin-top: 8px; }
+    .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; margin-top: 12px; }
     .wa-selector { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px; background: #e2e8f0; font-weight: bold;}
     
     .typable-input, .notes-box, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; margin-bottom: 10px; }
@@ -81,15 +85,26 @@
   <header><h1>📞 Smart Alumni Call Assistant</h1></header>
 
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('focused', this)">🎯 Dialer</button>
-    <button class="tab-btn" onclick="switchTab('import', this)">📥 New Batch</button>
+    <button class="tab-btn active" onclick="switchTab('import', this)">📥 New Batch</button>
+    <button class="tab-btn" onclick="switchTab('focused', this)">🎯 Dialer</button>
     <button class="tab-btn" onclick="switchTab('list', this)">📋 DB</button>
   </div>
 
   <div class="container">
 
-    <!-- TAB 1: FOCUSED DIALER -->
-    <div id="view-focused" class="view active">
+    <!-- TAB 1: PASTE BATCH -->
+    <div id="view-import" class="view active">
+      <h3>Load Fresh Calling Data</h3>
+      <div class="input-row" style="margin-top: 10px;">
+        <input type="text" id="batch-name" placeholder="Batch Name (e.g. Batch 2014)">
+      </div>
+      <textarea id="paste-input" class="import-box" placeholder="Paste Data (Name, Gender, Phone, Email)..."></textarea>
+      <button class="btn btn-primary" onclick="parseBatch()" style="padding: 12px; width: 100%;">🚀 Start Dialing Batch</button>
+      <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Data is saved offline to this browser automatically. Add multiple batches without losing past records.</p>
+    </div>
+
+    <!-- TAB 2: FOCUSED DIALER -->
+    <div id="view-focused" class="view">
       <!-- Quick Search Bar -->
       <div class="search-wrapper">
         <input type="text" id="dialer-search" class="search-input" placeholder="🔍 Quick Search Name or Phone..." oninput="handleSearch(this.value, 'dialer-results')" onfocus="handleSearch(this.value, 'dialer-results')">
@@ -104,16 +119,17 @@
       <div class="card card-main">
         <div class="contact-header">
           <input type="text" id="curr-name" class="contact-name-input" placeholder="Name" onchange="saveCurrentField('name', this.value)">
-          <select id="curr-gender" class="gender-selector" onchange="saveCurrentField('gender', this.value)">
-            <option value="">Gender?</option>
-            <option value="M">Male (M)</option>
-            <option value="F">Female (F)</option>
-          </select>
+          <div id="curr-gender" class="gender-badge gender-hidden"></div>
         </div>
         
-        <div>
-          <input type="text" id="curr-phone" class="field-input" placeholder="📱 Phone" onchange="saveCurrentField('phone', this.value)">
-          <input type="email" id="curr-email" class="field-input" placeholder="✉️ Email" onchange="saveCurrentField('email', this.value)">
+        <div class="input-with-icon">
+          <span>📱</span>
+          <input type="text" id="curr-phone" class="field-input" placeholder="No Phone Number" onchange="saveCurrentField('phone', this.value)">
+        </div>
+        
+        <div class="input-with-icon">
+          <span>✉️</span>
+          <input type="email" id="curr-email" class="field-input" placeholder="No Email Address" onchange="saveCurrentField('email', this.value)">
         </div>
 
         <!-- Buttons Grid -->
@@ -144,17 +160,6 @@
       </div>
     </div>
 
-    <!-- TAB 2: PASTE BATCH -->
-    <div id="view-import" class="view">
-      <h3>Load Fresh Calling Data</h3>
-      <div class="input-row" style="margin-top: 10px;">
-        <input type="text" id="batch-name" placeholder="Batch Name (e.g. Batch 2014)">
-      </div>
-      <textarea id="paste-input" class="import-box" placeholder="Paste Data (Name, Gender, Phone, Email)..."></textarea>
-      <button class="btn btn-primary" onclick="parseBatch()" style="padding: 12px; width: 100%;">🚀 Start Dialing Batch</button>
-      <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Data is saved offline to this browser automatically. Add multiple batches without losing past records.</p>
-    </div>
-
     <!-- TAB 3: DATABASE / EXPORT -->
     <div id="view-list" class="view">
       <input type="text" id="db-search" class="search-input" placeholder="🔍 Search Database by Name or Phone..." oninput="renderDB(this.value)">
@@ -178,8 +183,8 @@
     let currentIndex = 0;
 
     const templates = {
-      "1": "Dear [NAME],\n\nThank you for your time. We're delighted that you're interested in joining us for the Alliance Alumni Annual Meet August 29th 2026 as we celebrate 30 Years of Academic Excellence.\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nWe'll keep you updated with the event details. We look forward to celebrating this special milestone with you!",
-      "2": "Dear [NAME],\n\nGreetings from Alliance Alumni Association!\n\nWe tried reaching you regarding the Alliance Alumni Annual Meet August 29th 2026, celebrating 30 Years of Academic Excellence. Kindly let us know a convenient time to connect, or feel free to reply to this message.\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nWe look forward to hearing from you."
+      "1": "Dear [NAME],\n\nGreetings from your Alma Mater - Alliance University!\n\nWe are delighted to invite you to the Alliance Annual Alumni Meet 2026 – where connections will be rekindled, journeys celebrated, and nostalgia relived.\n\n*Date*: August 29, 2026\nTime: 2 PM onwards\n*Venue*: Alliance University, Central Campus\n\n*Featured Segments:*\n-Alliance Alumni Global Awards\n-Entrepreneur in You\n-CXO Meet\n-Beckoning the AlumSprouts\n-Annual General Meeting\n-Spotlight on Young Alumni\n-Gala Dinner & Musical Night\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nFor Quick Registration:\nhttps://docs.google.com/forms/d/e/1FAIpQLSd6sh37BzrYLLvM6O_3jkLRunfN3KQHaJML6LOnCoUv-FyLSw/viewform\n\nBest regards,\nAlliance Alumni Association",
+      "2": "Dear [NAME],\n\nGreetings from Alliance Alumni Association!\n\nWe tried reaching you regarding the Alliance Alumni Annual Meet August 29th 2026. Kindly let us know a convenient time to connect, or feel free to reply to this message.\n\nWe are delighted to invite you to the Alliance Annual Alumni Meet 2026 – where connections will be rekindled, journeys celebrated, and nostalgia relived.\n\n*Date*: August 29, 2026\nTime: 2 PM onwards\n*Venue*: Alliance University, Central Campus\n\n*Featured Segments:*\n-Alliance Alumni Global Awards\n-Entrepreneur in You\n-CXO Meet\n-Beckoning the AlumSprouts\n-Annual General Meeting\n-Spotlight on Young Alumni\n-Gala Dinner & Musical Night\n\nWe can’t wait to welcome you back!\n\nTo register and for more information, visit:\nhttps://www.alliance.edu.in/au-events/alliance-annual-alumni-meet-2026/\n\nFor Quick Registration:\nhttps://docs.google.com/forms/d/e/1FAIpQLSd6sh37BzrYLLvM6O_3jkLRunfN3KQHaJML6LOnCoUv-FyLSw/viewform\n\nBest regards,\nAlliance Alumni Association"
     };
 
     const emailSubject = "Alliance Annual Alumni Meet August 29th 2026";
@@ -208,7 +213,7 @@
     }
 
     function parseTextToContacts(rawText, batchName) {
-      let lines = rawText.split('\n');
+      let lines = rawText.split(/\r?\n|\r/); 
       let arr = [];
       lines.forEach(line => {
         if (!line.trim()) return;
@@ -224,7 +229,6 @@
         let gender = '';
         let status = 'Pending';
         
-        // Gender Extraction Logic
         if (line.match(/\b(MALE|M)\b/i) && !line.match(/Gmail|Mail/i)) gender = 'M';
         if (line.match(/\b(FEMALE|F)\b/i)) gender = 'F';
 
@@ -271,8 +275,7 @@
       alert(`Added ${newContacts.length} contacts! Total DB is now ${contacts.length}.`);
       document.getElementById('paste-input').value = '';
       
-      // Find the tab button for dialer
-      const dialerBtn = document.querySelectorAll('.tab-btn')[0];
+      const dialerBtn = document.querySelectorAll('.tab-btn')[1];
       switchTab('focused', dialerBtn);
     }
 
@@ -281,6 +284,7 @@
         document.getElementById('curr-name').value = 'No contacts in DB';
         document.getElementById('curr-phone').value = '';
         document.getElementById('curr-email').value = '';
+        document.getElementById('curr-gender').className = 'gender-badge gender-hidden';
         document.getElementById('batch-label').innerText = 'N/A';
         document.getElementById('total-count').innerText = 0;
         document.getElementById('current-idx-display').innerText = 0;
@@ -295,9 +299,19 @@
       document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / contacts.length) * 100}%`;
 
       document.getElementById('curr-name').value = c.name || '';
-      document.getElementById('curr-gender').value = c.gender || '';
       document.getElementById('curr-phone').value = c.phone || '';
       document.getElementById('curr-email').value = c.email || '';
+      
+      let genderBadge = document.getElementById('curr-gender');
+      if (c.gender === 'M') {
+        genderBadge.innerText = 'M';
+        genderBadge.className = 'gender-badge gender-m';
+      } else if (c.gender === 'F') {
+        genderBadge.innerText = 'F';
+        genderBadge.className = 'gender-badge gender-f';
+      } else {
+        genderBadge.className = 'gender-badge gender-hidden';
+      }
       
       document.getElementById('curr-status').value = c.status === 'Pending' ? '' : c.status;
       document.getElementById('curr-notes').value = c.notes || '';
@@ -320,7 +334,6 @@
         callBtn.href = `tel:${c.phone}`;
         waBtn.href = `https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`;
         
-        // Android vs iOS SMS format fix
         let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         let smsSeparator = isIOS ? '&' : '?';
         smsBtn.href = `sms:${c.phone}${smsSeparator}body=${encodeURIComponent(msg)}`;
@@ -359,7 +372,7 @@
 
     function goToContact(index) {
       currentIndex = index;
-      const dialerBtn = document.querySelectorAll('.tab-btn')[0];
+      const dialerBtn = document.querySelectorAll('.tab-btn')[1];
       switchTab('focused', dialerBtn);
       document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
     }
