@@ -19,13 +19,22 @@
     body { background-color: var(--bg); color: var(--text); padding-bottom: 30px; }
 
     header { background: var(--primary); color: white; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .nav-tabs { display: flex; background: white; border-bottom: 1px solid #e2e8f0; overflow-x: auto; white-space: nowrap; }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+
+    .nav-tabs { display: flex; background: white; border-bottom: 1px solid #e2e8f0; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
     .tab-btn { flex: 1; padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; border: none; background: none; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; }
     .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
     .container { padding: 16px; max-width: 600px; margin: 0 auto; }
     .view { display: none; }
     .view.active { display: block; }
+
+    /* Search Bar Styling */
+    .search-wrapper { position: relative; margin-bottom: 12px; }
+    .search-input { width: 100%; padding: 12px 14px; border: 2px solid var(--primary); border-radius: 10px; font-size: 0.95rem; outline: none; background: #fff; }
+    .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 220px; overflow-y: auto; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
+    .search-item { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+    .search-item:hover, .search-item:active { background: #f1f5f9; }
 
     textarea.import-box { width: 100%; height: 120px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; margin-bottom: 12px; resize: vertical; }
     .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -43,15 +52,16 @@
     .card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
     .card-main { border: 2px solid var(--primary); box-shadow: 0 8px 16px rgba(37,99,235,0.12); }
     
-    .contact-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .contact-name { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+    .contact-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .contact-name-input { font-size: 1.3rem; font-weight: 700; color: var(--text); border: 1px solid transparent; width: 100%; padding: 4px; border-radius: 6px; }
+    .contact-name-input:focus { border-color: var(--primary); background: #f8fafc; }
     
-    .gender-badge { display: inline-block; width: 24px; height: 24px; border-radius: 50%; text-align: center; line-height: 24px; color: white; font-weight: bold; font-size: 0.8rem; }
-    .gender-m { background-color: #3b82f6; } 
-    .gender-f { background-color: #ec4899; } 
-    .gender-hidden { display: none; }
+    .gender-selector { min-width: 90px; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; font-size: 0.85rem; background: #f1f5f9; }
 
-    .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .field-input { width: 100%; padding: 8px; border: 1px solid transparent; border-radius: 6px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; }
+    .field-input:focus { border-color: var(--primary); background: #f8fafc; color: var(--text); }
+
+    .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; margin-top: 8px; }
     .wa-selector { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px; background: #e2e8f0; font-weight: bold;}
     
     .typable-input, .notes-box, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; margin-bottom: 10px; }
@@ -62,33 +72,30 @@
     
     table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; font-size: 0.85rem; }
     th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    tr.clickable-row { cursor: pointer; }
+    tr.clickable-row:hover { background-color: #f1f5f9; }
   </style>
 </head>
 <body>
 
-  <header><h1>📞 Offline Call Assistant</h1></header>
+  <header><h1>📞 Smart Alumni Call Assistant</h1></header>
 
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('import')">📥 New Batch</button>
-    <button class="tab-btn" onclick="switchTab('focused')">🎯 Dialer</button>
-    <button class="tab-btn" onclick="switchTab('list')">📋 DB</button>
+    <button class="tab-btn active" onclick="switchTab('focused', this)">🎯 Dialer</button>
+    <button class="tab-btn" onclick="switchTab('import', this)">📥 New Batch</button>
+    <button class="tab-btn" onclick="switchTab('list', this)">📋 DB</button>
   </div>
 
   <div class="container">
 
-    <!-- TAB 1: PASTE BATCH -->
-    <div id="view-import" class="view active">
-      <h3>Load Fresh Calling Data</h3>
-      <div class="input-row">
-        <input type="text" id="batch-name" placeholder="Batch Name (e.g. Batch 2014)">
+    <!-- TAB 1: FOCUSED DIALER -->
+    <div id="view-focused" class="view active">
+      <!-- Quick Search Bar -->
+      <div class="search-wrapper">
+        <input type="text" id="dialer-search" class="search-input" placeholder="🔍 Quick Search Name or Phone..." oninput="handleSearch(this.value, 'dialer-results')" onfocus="handleSearch(this.value, 'dialer-results')">
+        <div id="dialer-results" class="search-results"></div>
       </div>
-      <textarea id="paste-input" class="import-box" placeholder="Paste Data (Name, Gender, Phone, Email)..."></textarea>
-      <button class="btn btn-primary" onclick="parseBatch()" style="padding: 12px; width: 100%;">🚀 Start Dialing Batch</button>
-      <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">All data is saved offline to this browser automatically. You can add as many batches as you want without losing old data.</p>
-    </div>
 
-    <!-- TAB 2: FOCUSED DIALER -->
-    <div id="view-focused" class="view">
       <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
       <div style="text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
         <span id="batch-label" style="font-weight:bold; color:var(--primary);"></span> | Contact <span id="current-idx-display">0</span> of <span id="total-count">0</span>
@@ -96,12 +103,18 @@
 
       <div class="card card-main">
         <div class="contact-header">
-          <div id="curr-name" class="contact-name">Select batch to start</div>
-          <div id="curr-gender" class="gender-badge gender-hidden"></div>
+          <input type="text" id="curr-name" class="contact-name-input" placeholder="Name" onchange="saveCurrentField('name', this.value)">
+          <select id="curr-gender" class="gender-selector" onchange="saveCurrentField('gender', this.value)">
+            <option value="">Gender?</option>
+            <option value="M">Male (M)</option>
+            <option value="F">Female (F)</option>
+          </select>
         </div>
         
-        <div id="curr-phone" style="color: var(--text-muted); margin-bottom: 4px;"></div>
-        <div id="curr-email" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;"></div>
+        <div>
+          <input type="text" id="curr-phone" class="field-input" placeholder="📱 Phone" onchange="saveCurrentField('phone', this.value)">
+          <input type="email" id="curr-email" class="field-input" placeholder="✉️ Email" onchange="saveCurrentField('email', this.value)">
+        </div>
 
         <!-- Buttons Grid -->
         <div class="action-group">
@@ -118,22 +131,35 @@
         </select>
 
         <!-- Status & Notes -->
-        <input type="text" id="curr-status" class="typable-input" list="status-options" placeholder="Call Status (e.g. RNR)" onchange="saveCurrent()">
+        <input type="text" id="curr-status" class="typable-input" list="status-options" placeholder="Call Status (e.g. RNR)" onchange="saveCurrentField('status', this.value)">
         <datalist id="status-options">
           <option value="Registered"><option value="Interested"><option value="Not Interested"><option value="RNR"><option value="Invalid Number"><option value="Not Sure"><option value="Resend Email"><option value="No Number">
         </datalist>
-        <textarea id="curr-notes" class="notes-box" placeholder="Remarks..." onchange="saveCurrent()"></textarea>
+        <textarea id="curr-notes" class="notes-box" placeholder="Remarks..." onchange="saveCurrentField('notes', this.value)"></textarea>
 
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <button class="btn btn-outline" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: transparent; cursor: pointer;" onclick="navigate(-1)">Prev</button>
+          <button class="btn btn-outline" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: transparent; color: var(--text); cursor: pointer;" onclick="navigate(-1)">Prev</button>
           <button class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="navigate(1)">Next ➡️</button>
         </div>
       </div>
     </div>
 
+    <!-- TAB 2: PASTE BATCH -->
+    <div id="view-import" class="view">
+      <h3>Load Fresh Calling Data</h3>
+      <div class="input-row" style="margin-top: 10px;">
+        <input type="text" id="batch-name" placeholder="Batch Name (e.g. Batch 2014)">
+      </div>
+      <textarea id="paste-input" class="import-box" placeholder="Paste Data (Name, Gender, Phone, Email)..."></textarea>
+      <button class="btn btn-primary" onclick="parseBatch()" style="padding: 12px; width: 100%;">🚀 Start Dialing Batch</button>
+      <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Data is saved offline to this browser automatically. Add multiple batches without losing past records.</p>
+    </div>
+
     <!-- TAB 3: DATABASE / EXPORT -->
     <div id="view-list" class="view">
-      <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <input type="text" id="db-search" class="search-input" placeholder="🔍 Search Database by Name or Phone..." oninput="renderDB(this.value)">
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 16px; margin-top: 10px;">
         <button class="btn btn-success" style="flex: 2; padding: 12px;" onclick="exportCSV()">📥 Export DB to Excel</button>
         <button class="btn btn-secondary" style="flex: 1; padding: 12px; background: #ef4444;" onclick="clearData()">Clear All</button>
       </div>
@@ -158,13 +184,25 @@
 
     const emailSubject = "Alliance Annual Alumni Meet August 29th 2026";
 
-    window.onload = () => { if(contacts.length > 0) renderFocused(); renderDB(); };
+    window.onload = () => { 
+      if(contacts.length > 0) renderFocused(); 
+      renderDB();
+      
+      // Close search dropdown on click outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) {
+          document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
+        }
+      });
+    };
 
-    function switchTab(tab) {
+    function switchTab(tab, btnEl) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      event.target.classList.add('active');
+      
+      if (btnEl) btnEl.classList.add('active');
       document.getElementById('view-' + tab).classList.add('active');
+      
       if(tab === 'focused') renderFocused();
       if(tab === 'list') renderDB();
     }
@@ -186,6 +224,10 @@
         let gender = '';
         let status = 'Pending';
         
+        // Gender Extraction Logic
+        if (line.match(/\b(MALE|M)\b/i) && !line.match(/Gmail|Mail/i)) gender = 'M';
+        if (line.match(/\b(FEMALE|F)\b/i)) gender = 'F';
+
         if(parts.length > 1) {
           let gPart = parts.find(p => p.match(/^(MALE|FEMALE|M|F)$/i));
           if(gPart) {
@@ -201,10 +243,11 @@
           
           status = parts.find(p => p.match(/^(Interested|Not Interested|RNR|Invalid Number|Not Sure|No Number|Registered)$/i)) || 'Pending';
         } else {
-          if (line.match(/\b(MALE|FEMALE)\b/i)) {
-             gender = line.match(/\b(MALE)\b/i) ? 'M' : 'F';
-          }
-          name = line.replace(/[6-9]\d{9}/, '').replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, '').replace(/MALE|FEMALE/ig, '').replace(/Not Interested|Interested|RNR|Invalid Number|Not Sure|No Number|Registered/ig, '').trim();
+          name = line.replace(/[6-9]\d{9}/, '')
+                     .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, '')
+                     .replace(/\b(MALE|FEMALE|M|F)\b/ig, '')
+                     .replace(/Not Interested|Interested|RNR|Invalid Number|Not Sure|No Number|Registered/ig, '')
+                     .trim();
         }
 
         arr.push({ name: name || 'Unknown', gender: gender, phone: phone, email: email, status: status, notes: '', batch: batchName });
@@ -227,11 +270,23 @@
       
       alert(`Added ${newContacts.length} contacts! Total DB is now ${contacts.length}.`);
       document.getElementById('paste-input').value = '';
-      switchTab('focused');
+      
+      // Find the tab button for dialer
+      const dialerBtn = document.querySelectorAll('.tab-btn')[0];
+      switchTab('focused', dialerBtn);
     }
 
     function renderFocused() {
-      if (contacts.length === 0) return;
+      if (contacts.length === 0) {
+        document.getElementById('curr-name').value = 'No contacts in DB';
+        document.getElementById('curr-phone').value = '';
+        document.getElementById('curr-email').value = '';
+        document.getElementById('batch-label').innerText = 'N/A';
+        document.getElementById('total-count').innerText = 0;
+        document.getElementById('current-idx-display').innerText = 0;
+        return;
+      }
+      
       let c = contacts[currentIndex];
       
       document.getElementById('batch-label').innerText = c.batch || 'Unnamed Batch';
@@ -239,24 +294,13 @@
       document.getElementById('current-idx-display').innerText = currentIndex + 1;
       document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / contacts.length) * 100}%`;
 
-      document.getElementById('curr-name').innerText = c.name;
-      
-      let genderBadge = document.getElementById('curr-gender');
-      if (c.gender === 'M') {
-        genderBadge.innerText = 'M';
-        genderBadge.className = 'gender-badge gender-m';
-      } else if (c.gender === 'F') {
-        genderBadge.innerText = 'F';
-        genderBadge.className = 'gender-badge gender-f';
-      } else {
-        genderBadge.className = 'gender-badge gender-hidden';
-      }
-      
-      document.getElementById('curr-phone').innerText = c.phone ? `📱 ${c.phone}` : 'No Phone Provided';
-      document.getElementById('curr-email').innerText = c.email ? `✉️ ${c.email}` : '';
+      document.getElementById('curr-name').value = c.name || '';
+      document.getElementById('curr-gender').value = c.gender || '';
+      document.getElementById('curr-phone').value = c.phone || '';
+      document.getElementById('curr-email').value = c.email || '';
       
       document.getElementById('curr-status').value = c.status === 'Pending' ? '' : c.status;
-      document.getElementById('curr-notes').value = c.notes;
+      document.getElementById('curr-notes').value = c.notes || '';
 
       updateLinks();
     }
@@ -265,7 +309,7 @@
       if (contacts.length === 0) return;
       let c = contacts[currentIndex];
       let tplId = document.getElementById('wa-template').value;
-      let msg = templates[tplId].replace(/\[NAME\]|\[Alumni Name\]/g, c.name);
+      let msg = templates[tplId].replace(/\[NAME\]|\[Alumni Name\]/g, c.name || 'Alumnus');
 
       let callBtn = document.getElementById('btn-call-link');
       let waBtn = document.getElementById('btn-wa-link');
@@ -275,6 +319,8 @@
       if (c.phone) {
         callBtn.href = `tel:${c.phone}`;
         waBtn.href = `https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`;
+        
+        // Android vs iOS SMS format fix
         let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         let smsSeparator = isIOS ? '&' : '?';
         smsBtn.href = `sms:${c.phone}${smsSeparator}body=${encodeURIComponent(msg)}`;
@@ -297,36 +343,70 @@
       }
     }
 
-    function saveCurrent() {
+    function saveCurrentField(field, val) {
       if (contacts.length === 0) return;
-      let c = contacts[currentIndex];
-      c.status = document.getElementById('curr-status').value;
-      c.notes = document.getElementById('curr-notes').value;
+      contacts[currentIndex][field] = val;
       localStorage.setItem('alumni_contacts', JSON.stringify(contacts));
+      if (field === 'name' || field === 'phone') updateLinks();
     }
 
     function navigate(dir) {
-      saveCurrent();
       if (currentIndex + dir >= 0 && currentIndex + dir < contacts.length) {
         currentIndex += dir;
         renderFocused();
       }
     }
 
-    function renderDB() {
+    function goToContact(index) {
+      currentIndex = index;
+      const dialerBtn = document.querySelectorAll('.tab-btn')[0];
+      switchTab('focused', dialerBtn);
+      document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
+    }
+
+    function handleSearch(query, resultsContainerId) {
+      let resultsContainer = document.getElementById(resultsContainerId);
+      if (!query.trim()) {
+        resultsContainer.style.display = 'none';
+        return;
+      }
+
+      let matches = contacts.map((c, idx) => ({ ...c, originalIndex: idx }))
+                            .filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || c.phone.includes(query));
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="search-item" style="color:var(--text-muted);">No alumni found</div>`;
+      } else {
+        resultsContainer.innerHTML = matches.map(m => `
+          <div class="search-item" onclick="goToContact(${m.originalIndex})">
+            <strong>${m.name}</strong> (${m.gender || 'N/A'}) - ${m.phone || 'No phone'}<br>
+            <small style="color:var(--text-muted);">${m.batch || 'No batch'} | Status: ${m.status}</small>
+          </div>
+        `).join('');
+      }
+      resultsContainer.style.display = 'block';
+    }
+
+    function renderDB(filterQuery = "") {
       let html = "";
-      contacts.forEach(c => {
+      contacts.forEach((c, idx) => {
+        if (filterQuery && !c.name.toLowerCase().includes(filterQuery.toLowerCase()) && !c.phone.includes(filterQuery)) {
+          return;
+        }
         let details = [c.batch, c.phone, c.email].filter(Boolean).join(' | ');
         let genderMark = c.gender ? ` (${c.gender})` : '';
-        html += `<tr><td><strong>${c.name}${genderMark}</strong><br><small>${details}</small></td><td>${c.status}</td></tr>`;
+        html += `<tr class="clickable-row" onclick="goToContact(${idx})">
+          <td><strong>${c.name}${genderMark}</strong><br><small style="color:var(--text-muted);">${details}</small></td>
+          <td><span style="font-weight:600;">${c.status}</span></td>
+        </tr>`;
       });
-      document.getElementById('table-body').innerHTML = html || "<tr><td colspan='2'>No data.</td></tr>";
+      document.getElementById('table-body').innerHTML = html || "<tr><td colspan='2'>No contacts found.</td></tr>";
     }
 
     function exportCSV() {
-      if (contacts.length === 0) return;
+      if (contacts.length === 0) return alert("Database is empty!");
       let csv = "Batch,Name,Gender,Phone,Email,Status,Remarks\n";
-      contacts.forEach(c => csv += `"${c.batch || ''}","${c.name}","${c.gender}","${c.phone}","${c.email}","${c.status}","${(c.notes||'').replace(/"/g, '""')}"\n`);
+      contacts.forEach(c => csv += `"${c.batch || ''}","${c.name || ''}","${c.gender || ''}","${c.phone || ''}","${c.email || ''}","${c.status || ''}","${(c.notes||'').replace(/"/g, '""')}"\n`);
       const link = document.createElement("a");
       link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
       link.download = `Alumni_Master_Database.csv`;
@@ -335,8 +415,10 @@
 
     function clearData() {
       if(confirm("Clear local DB entirely? Make sure you exported to Excel first!")) {
-        contacts = []; localStorage.clear();
-        renderDB(); switchTab('import');
+        contacts = []; 
+        localStorage.clear();
+        renderDB(); 
+        renderFocused();
       }
     }
   </script>
