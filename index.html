@@ -164,9 +164,10 @@
     <div id="view-list" class="view">
       <input type="text" id="db-search" class="search-input" placeholder="🔍 Search Database by Name or Phone..." oninput="renderDB(this.value)">
       
-      <div style="display: flex; gap: 10px; margin-bottom: 16px; margin-top: 10px;">
-        <button class="btn btn-success" style="flex: 2; padding: 12px;" onclick="exportCSV()">📥 Export DB to Excel</button>
-        <button class="btn btn-secondary" style="flex: 1; padding: 12px; background: #ef4444;" onclick="clearData()">Clear All</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; margin-top: 10px;">
+        <button class="btn btn-success" style="flex: 2; padding: 12px 4px;" onclick="exportCSV()">📥 Export</button>
+        <button class="btn btn-primary" style="flex: 2; padding: 12px 4px; background: #0ea5e9;" onclick="shareCSV()">📤 Share</button>
+        <button class="btn btn-outline" style="flex: 1.5; padding: 12px 4px;" onclick="clearData()">Clear All</button>
       </div>
       <div style="overflow-x: auto;">
         <table id="contacts-table">
@@ -424,6 +425,28 @@
       link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
       link.download = `Alumni_Master_Database.csv`;
       link.click();
+    }
+
+    async function shareCSV() {
+      if (contacts.length === 0) return alert("Database is empty!");
+      let csv = "Batch,Name,Gender,Phone,Email,Status,Remarks\n";
+      contacts.forEach(c => csv += `"${c.batch || ''}","${c.name || ''}","${c.gender || ''}","${c.phone || ''}","${c.email || ''}","${c.status || ''}","${(c.notes||'').replace(/"/g, '""')}"\n`);
+      
+      if (navigator.share) {
+        // Package the data into a real file format for the phone to recognize
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const file = new File([blob], 'Alumni_Master_Database.csv', { type: 'text/csv' });
+        try {
+          await navigator.share({
+            title: 'Alumni Database Export',
+            files: [file]
+          });
+        } catch (err) {
+          console.log("Share canceled or failed", err);
+        }
+      } else {
+        alert("Direct sharing is not supported on this browser. Please use the Export button.");
+      }
     }
 
     function clearData() {
